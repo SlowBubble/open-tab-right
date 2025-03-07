@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Open-Close Tab Right",
+  "version": "1.0",
+  "description": "Opens new tabs to the right and navigates left on close.",
+  "permissions": [
+    "tabs"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
