@@ -48,6 +48,18 @@ chrome.tabs.onRemoved.addListener(async () => {
   }
 });
 
+chrome.tabs.onMoved.addListener(async (tabId, moveInfo) => {
+  try {
+    const activeTab = await chrome.tabs.get(tabId);
+    if (activeTab.active) {
+      currentTabIndex = moveInfo.toIndex;
+      console.log('[onMoved] currentTabIndex:', currentTabIndex);
+    }
+  } catch (error) {
+    console.error("Error tracking tab move:", error);
+  }
+});
+
 async function getCurrentTab() {
   let queryOptions = { active: true, lastFocusedWindow: true };
   // `tab` will either be a `tabs.Tab` instance or `undefined`.

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Open-Close Tab Right",
+  "name": "Open-Tab-Right",
   "version": "1.0",
-  "description": "Opens new tabs to the right and navigates left on close.",
+  "description": "Opens new tabs to the right. Move left when closing a tab.",
   "permissions": [
     "tabs"
   ],
