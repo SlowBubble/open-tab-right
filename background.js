@@ -1,10 +1,11 @@
-let currentTabIndex = null;
+let activeTab = { windowId: null, index: null };
+
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
   try {
-    const activeTab = await chrome.tabs.get(activeInfo.tabId);
-    if (activeTab) {
-      currentTabIndex = activeTab.index;
-      console.log('[onActivated] currentTabIndex:', currentTabIndex);
+    const tab = await chrome.tabs.get(activeInfo.tabId);
+    if (tab) {
+      activeTab = { windowId: tab.windowId, index: tab.index };
+      console.log('[onActivated]', activeTab);
     }
   } catch (error) {
     console.error("Error tracking active tab:", error);
@@ -19,8 +20,8 @@ chrome.tabs.onCreated.addListener(async (tab) => {
         chrome.tabs.move(tab.id, { index: openerTab.index + 1 });
         // Hack: Wait for onActivated before updating this because activeTab.index is stale/wrong!
         setTimeout(() => {
-          currentTabIndex = openerTab.index + 1;
-          console.log('[onCreated] currentTabIndex:', currentTabIndex);
+          activeTab.index = openerTab.index + 1;
+          console.log('[onCreated] currentTabIndex:', activeTab.index);
         }, 500);
     }
     } catch (error) {
@@ -29,16 +30,16 @@ chrome.tabs.onCreated.addListener(async (tab) => {
   }
 });
 
-chrome.tabs.onRemoved.addListener(async () => {
+chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
   try {
-    if (currentTabIndex === null) return;
+    if (removeInfo.isWindowClosing) return;
+    if (activeTab.index === null || activeTab.windowId === null) return;
 
-    const allTabs = await chrome.tabs.query({ currentWindow: true });
+    // Only switch tabs in the window where the tab was closed
+    const allTabs = await chrome.tabs.query({ windowId: activeTab.windowId });
     if (allTabs.length <= 1) return;
 
-    const desiredTabIndex = Math.max(0, currentTabIndex - 1);
-    console.log('desiredTabIndex:', desiredTabIndex);
-    console.log('allTabs.length:', allTabs.length);
+    const desiredTabIndex = Math.max(0, activeTab.index - 1);
     if (desiredTabIndex >= allTabs.length) return;
 
     const desiredTab = allTabs[desiredTabIndex];
@@ -50,10 +51,10 @@ chrome.tabs.onRemoved.addListener(async () => {
 
 chrome.tabs.onMoved.addListener(async (tabId, moveInfo) => {
   try {
-    const activeTab = await chrome.tabs.get(tabId);
-    if (activeTab.active) {
-      currentTabIndex = moveInfo.toIndex;
-      console.log('[onMoved] currentTabIndex:', currentTabIndex);
+    const tab = await chrome.tabs.get(tabId);
+    if (tab.active && tab.windowId === activeTab.windowId) {
+      activeTab.index = moveInfo.toIndex;
+      console.log('[onMoved]', activeTab);
     }
   } catch (error) {
     console.error("Error tracking tab move:", error);
